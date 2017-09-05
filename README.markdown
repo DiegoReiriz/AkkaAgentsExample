@@ -1,6 +1,6 @@
 # Crash into akka
 
-Small documentation with my first steps into the akka framework that's made possible use the Agent Model paradigm in the Scala Language
+Small documentation with my first steps into the akka framework that mades possible use the Actor Model paradigm in the Scala Language
 
 ## Options, options and more options
 
