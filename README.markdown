@@ -1,6 +1,6 @@
 # Crash into akka
 
-Small documentation with my first steps into the akka framework that mades possible use the Actor Model paradigm in the Scala Language
+Small documentation with my first steps into the akka framework that's made possible use the Actor Model paradigm in the Scala Language
 
 ## Options, options and more options
 
@@ -14,7 +14,7 @@ So if you check the [akka](http://akka.io/) project webpage, you can see a reall
 
 ## Time to get dirty
 
-I think that the best way to understand what is akka and how it works it doing a simple example, so let's develop and application in which we have 2 kinds of agents, *Producers* and *Consumers*. The idea is that, the *Producers* will send a message through a socket that will be listening a *Consumer* agent. Once the *Consumer* agent recieves the data, it will print the message.
+I think that the best way to understand what is akka and how it works it doing a simple example, so let's develop and application in which we have 2 kinds of Actors, *Producers* and *Consumers*. The idea is that, the *Producers* will send a message through a socket that will be listening a *Consumer* Actor. Once the *Consumer* Actor recieves the data, it will print the message.
 
 So with this example, we are going to learn how to send message to actor using akka and how to write and read from sockets,
 
@@ -25,12 +25,12 @@ So with this example, we are going to learn how to send message to actor using a
 
 ### Let's start building the producer
 
-The producer agent that we are building it's an easy one. The agent will do the following steps:
+The producer Actor that we are building it's an easy one. The Actor will do the following steps:
 
-1. Agent check if can stablish a connection to a socket
-2. Agent sends data trough the socket
-3. Agent close the connection
-4. Agent destroys itself
+1. Actor check if can stablish a connection to a socket
+2. Actor sends data trough the socket
+3. Actor close the connection
+4. Actor destroys itself
 
 For this puspose, we are going to use Scala companion objects.
 
@@ -46,7 +46,7 @@ import akka.util.ByteString
 import scala.collection.mutable
 
 object SocketProducer {
-  //Needed to create an Agent with a given configuration
+  //Needed to create an Actor with a given configuration
   def props(host: String, port: Int, messages: mutable.MutableList[String]): Props =
     Props(new SocketProducer(host,port,messages))
 
@@ -56,12 +56,12 @@ class SocketProducer(host: String, port: Int, messages: mutable.MutableList[Stri
 
   import SocketProducer._
 
-  // function that allows us to do some logic before the Agent is up
+  // function that allows us to do some logic before the Actor is up
   override def preStart(): Unit = {
     log.info("Starting socket PRODUCER actor with following config {}:{}",host,port)
   }
 
-  // function that allows us to do some logic once the agent is down
+  // function that allows us to do some logic once the Actor is down
   override def postStop(): Unit = {
     log.info("Stopped socket PRODUCER actor")
   }
@@ -70,7 +70,7 @@ class SocketProducer(host: String, port: Int, messages: mutable.MutableList[Stri
 
 ```
 
-Now we need to connect the agent to the socket, for that purppose we have to communicate our agent with the IO agent that manages the communication with the Socket and we also have to implement the receive method of our agent, because the IO agent will send use message with information about the socket.
+Now we need to connect the Actor to the socket, for that purppose we have to communicate our Actor with the IO Actor that manages the communication with the Socket and we also have to implement the receive method of our Actor, because the IO Actor will send use message with information about the socket.
 
 ```scala
 import java.net.InetSocketAddress
@@ -83,7 +83,7 @@ import scala.collection.mutable
 
 object SocketProducer {
 
-  //Needed to create an Agent with a given configuration
+  //Needed to create an Actor with a given configuration
   def props(host: String, port: Int, messages: mutable.MutableList[String]): Props =
     Props(new SocketProducer(host,port,messages))
 
@@ -96,18 +96,18 @@ class SocketProducer(host: String, port: Int, messages: mutable.MutableList[Stri
   import akka.io.Tcp._
   import context.system
 
-  // agent that manages the low level communication with the socket
-  // this agent can send messages to out SocketProducer Agent, because
-  // a reference to the SocketProducer agent is implicit passed
+  // Actor that manages the low level communication with the socket
+  // this Actor can send messages to out SocketProducer Actor, because
+  // a reference to the SocketProducer Actor is implicit passed
   // when we invoke IO(Tcp)
   IO(Tcp) ! Connect(new InetSocketAddress(host,port))
 
-  // function that allows us to do some logic before the Agent is up
+  // function that allows us to do some logic before the Actor is up
   override def preStart(): Unit = {
     log.info("Starting socket PRODUCER actor with following config {}:{}",host,port)
   }
 
-  // function that allows us to do some logic once the agent is down
+  // function that allows us to do some logic once the Actor is down
   override def postStop(): Unit = {
     log.info("Stopped socket PRODUCER actor")
   }
@@ -144,17 +144,17 @@ class SocketProducer(host: String, port: Int, messages: mutable.MutableList[Stri
           connection ! Close
         case _: ConnectionClosed =>
           log.warning("connection closed")
-          //kills the agent
+          //kills the Actor
           context stop self
       }
 
-    //if the agent receives a message that it doesn't understand, it sends a warning through the logger
+    //if the Actor receives a message that it doesn't understand, it sends a warning through the logger
     case x @ _ => log.warning("Something else is up. ---> " + x.toString)
 
   }
 }
 ```
-Ok, we have the agent, but we need to test if it's working as we tought. First of all, we have to lanch the agent from somewhere in our code. In this case I'm gonna invoke the agent from a Main scala object.
+Ok, we have the Actor, but we need to test if it's working as we tought. First of all, we have to launch the Actor from somewhere in our code. In this case I'm gonna invoke the Actor from a Main scala object.
 
 ```scala
 
@@ -185,7 +185,7 @@ object Main {
 
 ```
 
-That code is enough to launch our akka agent, but we need a somebody listen in `localhost:9000` to check if everything is alright. Before creating the consumer agent we can check it using the **netcat** terminal utiity/program in a terminal as follows:
+That code is enough to launch our akka Actor, but we need a somebody listen in `localhost:9000` to check if everything is alright. Before creating the consumer Actor we can check it using the **netcat** terminal utiity/program in a terminal as follows:
 
 ```bash
   nc -lk 9000
@@ -214,7 +214,7 @@ import scala.collection.mutable
 
 object SocketConsumer {
 
-  //Needed to create an Agent with a given configuration
+  //Needed to create an Actor with a given configuration
   def props(port: Int): Props = Props(new SocketConsumer(port))
 
 }
@@ -226,18 +226,18 @@ class SocketConsumer(port: Int) extends Actor with ActorLogging{
   import akka.io.Tcp._
   import context.system
 
-  // agent that manages the low level communication with the socket
-  // this agent can send messages to out SocketProducer Agent, because
-  // a reference to the SocketProducer agent is implicit passed
+  // Actor that manages the low level communication with the socket
+  // this Actor can send messages to out SocketProducer Actor, because
+  // a reference to the SocketProducer Actor is implicit passed
   // when we invoke IO(Tcp)
   IO(Tcp) ! Bind(self, new InetSocketAddress("localhost", port))
 
-  // function that allows us to do some logic before the Agent is up
+  // function that allows us to do some logic before the Actor is up
   override def preStart(): Unit = {
     log.info("Starting socket CONSUMER actor in port {}",port)
   }
 
-  // function that allows us to do some logic once the agent is down
+  // function that allows us to do some logic once the Actor is down
   override def postStop(): Unit = {
     log.info("Stopped socket CONSUMER actor")
   }
@@ -256,7 +256,7 @@ class SocketConsumer(port: Int) extends Actor with ActorLogging{
     case Received(message) => log.info("Received: \n"+ message.decodeString("UTF8"))
     case PeerClosed     => context stop self
 
-    //if the agent receives a message that it doesn't understand, it sends a warning through the logger
+    //if the Actor receives a message that it doesn't understand, it sends a warning through the logger
     case x @ _ => log.warning("Something else is up. ---> " + x.toString)
 
   }
@@ -312,4 +312,3 @@ Three
 [INFO] [09/05/2017 13:31:06.672] [MyActorSystem-akka.actor.default-dispatcher-7] [akka://MyActorSystem/user/$a] Stopped socket CONSUMER actor
 [WARN] [09/05/2017 13:31:06.673] [MyActorSystem-akka.actor.default-dispatcher-2] [akka://MyActorSystem/user/$b] connection closed
 [INFO] [09/05/2017 13:31:06.673] [MyActorSystem-akka.actor.default-dispatcher-2] [akka://MyActorSystem/user/$b] Stopped socket PRODUCER actor
-```
